@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./DelegateERC20.sol";
 
-contract DSGToken is DelegateERC20, Ownable {
+contract MagicBallToken is DelegateERC20, Ownable {
 
     event AddWhiteList(address user);
     event RemoveWhiteList(address user);

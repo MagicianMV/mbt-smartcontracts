@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../token/DSGToken.sol";
+import "../interfaces/IMagicBallToken.sol";
 import "../interfaces/ISwapPair.sol";
 import "../interfaces/IDsgNft.sol";
 import "../interfaces/IERC20Metadata.sol";
@@ -74,7 +74,7 @@ contract LiquidityPool is Ownable {
     }
 
     // The reward token!
-    DSGToken public rewardToken;
+    IMagicBallToken public rewardToken;
     // reward tokens created per block.
     uint256 public rewardTokenPerBlock;
 
@@ -102,7 +102,7 @@ contract LiquidityPool is Ownable {
     event AdditionalNft(address indexed user, uint256 pid, uint256 nftId);
 
     constructor(
-        DSGToken _rewardToken,
+        IMagicBallToken _rewardToken,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         address _feeWallet
@@ -524,7 +524,7 @@ contract LiquidityPool is Ownable {
         uint256 pid = LpOfPid[lpToken];
         UserInfo memory user = userInfo[pid][account];
         uint256 unclaimedRewards = pendingRewards(pid, account);
-        uint256 lpBalance = ERC20(lpToken).balanceOf(account);
+        uint256 lpBalance = IERC20(lpToken).balanceOf(account);
         return
             UserView({
                 stakedAmount: user.amount,

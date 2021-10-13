@@ -8,16 +8,16 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../libraries/DecimalMath.sol";
-import "../interfaces/IDsgToken.sol";
+import "../interfaces/IMagicBallToken.sol";
 
-contract vDSGToken is Ownable {
+contract vMBTToken is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     // ============ Storage(ERC20) ============
 
-    string public name = "vDSG Membership Token";
-    string public symbol = "vDSG";
+    string public name = "vMBT Membership Token";
+    string public symbol = "vMBT";
     uint8 public decimals = 18;
 
     uint256 public _MIN_PENALTY_RATIO_ = 15 * 10**16; // 15%
@@ -29,18 +29,18 @@ contract vDSGToken is Ownable {
 
     // ============ Storage ============
 
-    address public _dsgToken;
-    address public _dsgTeam;
-    address public _dsgReserve;
+    address public _mbtToken;
+    address public _mbtTeam;
+    address public _mbtReserve;
 
     bool public _canTransfer;
 
     // staking reward parameters
-    uint256 public _dsgPerBlock;
+    uint256 public _mbtPerBlock;
     uint256 public constant _superiorRatio = 10**17; // 0.1
-    uint256 public constant _dsgRatio = 100; // 100
-    uint256 public _dsgFeeBurnRatio = 30 * 10**16; //30%
-    uint256 public _dsgFeeReserveRatio = 20 * 10**16; //20%
+    uint256 public constant _mbtRatio = 100; // 100
+    uint256 public _mbtFeeBurnRatio = 30 * 10**16; //30%
+    uint256 public _mbtFeeReserveRatio = 20 * 10**16; //20%
 
     // accounting
     uint112 public alpha = 10**18; // 1
@@ -51,7 +51,7 @@ contract vDSGToken is Ownable {
     uint256 public _totalStakingPower;
     mapping(address => UserInfo) public userInfo;
     
-    uint256 public _superiorMinDSG = 1000e18; //The superior must obtain the min DSG that should be pledged for invitation rewards
+    uint256 public _superiorMinMBT = 1000e18; //The superior must obtain the min MBT that should be pledged for invitation rewards
 
     struct UserInfo {
         uint128 stakingPower;
@@ -63,14 +63,14 @@ contract vDSGToken is Ownable {
 
     // ============ Events ============
 
-    event MintVDSG(address user, address superior, uint256 mintDSG);
-    event RedeemVDSG(address user, uint256 receiveDSG, uint256 burnDSG, uint256 feeDSG, uint256 reserveDSG);
-    event DonateDSG(address user, uint256 donateDSG);
+    event MintVMBT(address user, address superior, uint256 mintMBT);
+    event RedeemVMBT(address user, uint256 receiveMBT, uint256 burnMBT, uint256 feeMBT, uint256 reserveMBT);
+    event DonateMBT(address user, uint256 donateMBT);
     event SetCanTransfer(bool allowed);
 
-    event PreDeposit(uint256 dsgAmount);
-    event ChangePerReward(uint256 dsgPerBlock);
-    event UpdateDSGFeeBurnRatio(uint256 dsgFeeBurnRatio);
+    event PreDeposit(uint256 mbtAmount);
+    event ChangePerReward(uint256 mbtPerBlock);
+    event UpdateMBTFeeBurnRatio(uint256 mbtFeeBurnRatio);
 
     event Transfer(address indexed from, address indexed to, uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 amount);
@@ -78,25 +78,25 @@ contract vDSGToken is Ownable {
     // ============ Modifiers ============
 
     modifier canTransfer() {
-        require(_canTransfer, "vDSGToken: not allowed transfer");
+        require(_canTransfer, "vMBTToken: not allowed transfer");
         _;
     }
 
     modifier balanceEnough(address account, uint256 amount) {
-        require(availableBalanceOf(account) >= amount, "vDSGToken: available amount not enough");
+        require(availableBalanceOf(account) >= amount, "vMBTToken: available amount not enough");
         _;
     }
 
     // ============ Constructor ============
 
     constructor(
-        address dsgToken,
-        address dsgTeam,
-        address dsgReserve
+        address mbtToken,
+        address mbtTeam,
+        address mbtReserve
     ) public {
-        _dsgToken = dsgToken;
-        _dsgTeam = dsgTeam;
-        _dsgReserve = dsgReserve;
+        _mbtToken = mbtToken;
+        _mbtTeam = mbtTeam;
+        _mbtReserve = mbtReserve;
 
         changePerReward(15*10**18);
     }
@@ -108,102 +108,102 @@ contract vDSGToken is Ownable {
         emit SetCanTransfer(allowed);
     }
 
-    function changePerReward(uint256 dsgPerBlock) public onlyOwner {
+    function changePerReward(uint256 mbtPerBlock) public onlyOwner {
         _updateAlpha();
-        _dsgPerBlock = dsgPerBlock;
-        emit ChangePerReward(dsgPerBlock);
+        _mbtPerBlock = mbtPerBlock;
+        emit ChangePerReward(mbtPerBlock);
     }
 
-    function updateDSGFeeBurnRatio(uint256 dsgFeeBurnRatio) public onlyOwner {
-        _dsgFeeBurnRatio = dsgFeeBurnRatio;
-        emit UpdateDSGFeeBurnRatio(_dsgFeeBurnRatio);
+    function updateMBTFeeBurnRatio(uint256 mbtFeeBurnRatio) public onlyOwner {
+        _mbtFeeBurnRatio = mbtFeeBurnRatio;
+        emit UpdateMBTFeeBurnRatio(_mbtFeeBurnRatio);
     }
 
-    function updateDSGFeeReserveRatio(uint256 dsgFeeReserve) public onlyOwner {
-        _dsgFeeReserveRatio = dsgFeeReserve;
+    function updateMBTFeeReserveRatio(uint256 mbtFeeReserve) public onlyOwner {
+        _mbtFeeReserveRatio = mbtFeeReserve;
     }
 
     function updateTeamAddress(address team) public onlyOwner {
-        _dsgTeam = team;
+        _mbtTeam = team;
     }
 
     function updateReserveAddress(address newAddress) public onlyOwner {
-        _dsgReserve = newAddress;
+        _mbtReserve = newAddress;
     }
     
-    function setSuperiorMinDSG(uint256 val) public onlyOwner {
-        _superiorMinDSG = val;
+    function setSuperiorMinMBT(uint256 val) public onlyOwner {
+        _superiorMinMBT = val;
     }
 
     function emergencyWithdraw() public onlyOwner {
-        uint256 dsgBalance = IERC20(_dsgToken).balanceOf(address(this));
-        IERC20(_dsgToken).safeTransfer(owner(), dsgBalance);
+        uint256 mbtBalance = IERC20(_mbtToken).balanceOf(address(this));
+        IERC20(_mbtToken).safeTransfer(owner(), mbtBalance);
     }
 
     // ============ Mint & Redeem & Donate ============
 
-    function mint(uint256 dsgAmount, address superiorAddress) public {
+    function mint(uint256 mbtAmount, address superiorAddress) public {
         require(
             superiorAddress != address(0) && superiorAddress != msg.sender,
-            "vDSGToken: Superior INVALID"
+            "vMBTToken: Superior INVALID"
         );
-        require(dsgAmount >= 1e18, "vDSGToken: must mint greater than 1");
+        require(mbtAmount >= 1e18, "vMBTToken: must mint greater than 1");
         
 
         UserInfo storage user = userInfo[msg.sender];
 
         if (user.superior == address(0)) {
             require(
-                superiorAddress == _dsgTeam || userInfo[superiorAddress].superior != address(0),
-                "vDSGToken: INVALID_SUPERIOR_ADDRESS"
+                superiorAddress == _mbtTeam || userInfo[superiorAddress].superior != address(0),
+                "vMBTToken: INVALID_SUPERIOR_ADDRESS"
             );
             user.superior = superiorAddress;
         }
         
-        if(_superiorMinDSG > 0) {
-            uint256 curDSG = dsgBalanceOf(user.superior);
-            if(curDSG < _superiorMinDSG) {
-                user.superior = _dsgTeam;
+        if(_superiorMinMBT > 0) {
+            uint256 curMBT = mbtBalanceOf(user.superior);
+            if(curMBT < _superiorMinMBT) {
+                user.superior = _mbtTeam;
             }
         }
 
         _updateAlpha();
 
-        IERC20(_dsgToken).safeTransferFrom(msg.sender, address(this), dsgAmount);
+        IERC20(_mbtToken).safeTransferFrom(msg.sender, address(this), mbtAmount);
 
-        uint256 newStakingPower = DecimalMath.divFloor(dsgAmount, alpha);
+        uint256 newStakingPower = DecimalMath.divFloor(mbtAmount, alpha);
 
         _mint(user, newStakingPower);
 
-        emit MintVDSG(msg.sender, superiorAddress, dsgAmount);
+        emit MintVMBT(msg.sender, superiorAddress, mbtAmount);
     }
 
-    function redeem(uint256 vDsgAmount, bool all) public balanceEnough(msg.sender, vDsgAmount) {
+    function redeem(uint256 vMbtAmount, bool all) public balanceEnough(msg.sender, vMbtAmount) {
         _updateAlpha();
         UserInfo storage user = userInfo[msg.sender];
 
-        uint256 dsgAmount;
+        uint256 mbtAmount;
         uint256 stakingPower;
 
         if (all) {
             stakingPower = uint256(user.stakingPower).sub(DecimalMath.divFloor(user.credit, alpha));
-            dsgAmount = DecimalMath.mulFloor(stakingPower, alpha);
+            mbtAmount = DecimalMath.mulFloor(stakingPower, alpha);
         } else {
-            dsgAmount = vDsgAmount.mul(_dsgRatio);
-            stakingPower = DecimalMath.divFloor(dsgAmount, alpha);
+            mbtAmount = vMbtAmount.mul(_mbtRatio);
+            stakingPower = DecimalMath.divFloor(mbtAmount, alpha);
         }
 
         _redeem(user, stakingPower);
 
-        (uint256 dsgReceive, uint256 burnDsgAmount, uint256 withdrawFeeAmount, uint256 reserveAmount) = getWithdrawResult(dsgAmount);
+        (uint256 mbtReceive, uint256 burnMbtAmount, uint256 withdrawFeeAmount, uint256 reserveAmount) = getWithdrawResult(mbtAmount);
 
-        IERC20(_dsgToken).safeTransfer(msg.sender, dsgReceive);
+        IERC20(_mbtToken).safeTransfer(msg.sender, mbtReceive);
 
-        if (burnDsgAmount > 0) {
-            IDsgToken(_dsgToken).burn(burnDsgAmount);
+        if (burnMbtAmount > 0) {
+            IMagicBallToken(_mbtToken).burn(burnMbtAmount);
         }
         if (reserveAmount > 0) {
-            IERC20(_dsgToken).safeTransfer(_dsgReserve, reserveAmount);
+            IERC20(_mbtToken).safeTransfer(_mbtReserve, reserveAmount);
         }
 
         if (withdrawFeeAmount > 0) {
@@ -214,62 +214,54 @@ contract vDSGToken is Ownable {
             );
         }
 
-        emit RedeemVDSG(msg.sender, dsgReceive, burnDsgAmount, withdrawFeeAmount, reserveAmount);
+        emit RedeemVMBT(msg.sender, mbtReceive, burnMbtAmount, withdrawFeeAmount, reserveAmount);
     }
 
-    function donate(uint256 dsgAmount) public {
+    function donate(uint256 mbtAmount) public {
 
-        IERC20(_dsgToken).safeTransferFrom(msg.sender, address(this), dsgAmount);
+        IERC20(_mbtToken).safeTransferFrom(msg.sender, address(this), mbtAmount);
 
         alpha = uint112(
-            uint256(alpha).add(DecimalMath.divFloor(dsgAmount, _totalStakingPower))
+            uint256(alpha).add(DecimalMath.divFloor(mbtAmount, _totalStakingPower))
         );
-        emit DonateDSG(msg.sender, dsgAmount);
+        emit DonateMBT(msg.sender, mbtAmount);
     }
-
-    // function preDepositedBlockReward(uint256 dsgAmount) public {
-
-    //     IERC20(_dsgToken).safeTransferFrom(msg.sender, address(this), dsgAmount);
-
-    //     _totalBlockReward = _totalBlockReward.add(dsgAmount);
-    //     emit PreDeposit(dsgAmount);
-    // }
 
     // ============ ERC20 Functions ============
 
-    function totalSupply() public view returns (uint256 vDsgSupply) {
-        uint256 totalDsg = IERC20(_dsgToken).balanceOf(address(this));
+    function totalSupply() public view returns (uint256 vMbtSupply) {
+        uint256 totalMbt = IERC20(_mbtToken).balanceOf(address(this));
         (,uint256 curDistribution) = getLatestAlpha();
         
-        uint256 actualDsg = totalDsg.add(curDistribution);
-        vDsgSupply = actualDsg / _dsgRatio;
+        uint256 actualMbt = totalMbt.add(curDistribution);
+        vMbtSupply = actualMbt / _mbtRatio;
     }
 
-    function balanceOf(address account) public view returns (uint256 vDsgAmount) {
-        vDsgAmount = dsgBalanceOf(account) / _dsgRatio;
+    function balanceOf(address account) public view returns (uint256 vMbtAmount) {
+        vMbtAmount = mbtBalanceOf(account) / _mbtRatio;
     }
 
-    function transfer(address to, uint256 vDsgAmount) public returns (bool) {
+    function transfer(address to, uint256 vMbtAmount) public returns (bool) {
         _updateAlpha();
-        _transfer(msg.sender, to, vDsgAmount);
+        _transfer(msg.sender, to, vMbtAmount);
         return true;
     }
 
-    function approve(address spender, uint256 vDsgAmount) canTransfer public returns (bool) {
-        _allowed[msg.sender][spender] = vDsgAmount;
-        emit Approval(msg.sender, spender, vDsgAmount);
+    function approve(address spender, uint256 vMbtAmount) canTransfer public returns (bool) {
+        _allowed[msg.sender][spender] = vMbtAmount;
+        emit Approval(msg.sender, spender, vMbtAmount);
         return true;
     }
 
     function transferFrom(
         address from,
         address to,
-        uint256 vDsgAmount
+        uint256 vMbtAmount
     ) public returns (bool) {
-        require(vDsgAmount <= _allowed[from][msg.sender], "ALLOWANCE_NOT_ENOUGH");
+        require(vMbtAmount <= _allowed[from][msg.sender], "ALLOWANCE_NOT_ENOUGH");
         _updateAlpha();
-        _transfer(from, to, vDsgAmount);
-        _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(vDsgAmount);
+        _transfer(from, to, vMbtAmount);
+        _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(vMbtAmount);
         return true;
     }
 
@@ -283,7 +275,7 @@ contract vDSGToken is Ownable {
         if (_lastRewardBlock == 0) {
             curDistribution = 0;
         } else {
-            curDistribution = _dsgPerBlock * (block.number - _lastRewardBlock);
+            curDistribution = _mbtPerBlock * (block.number - _lastRewardBlock);
         }
         if (_totalStakingPower > 0) {
             newAlpha = uint256(alpha).add(DecimalMath.divFloor(curDistribution, _totalStakingPower));
@@ -292,50 +284,50 @@ contract vDSGToken is Ownable {
         }
     }
 
-    function availableBalanceOf(address account) public view returns (uint256 vDsgAmount) {
-        vDsgAmount = balanceOf(account);
+    function availableBalanceOf(address account) public view returns (uint256 vMbtAmount) {
+        vMbtAmount = balanceOf(account);
     }
 
-    function dsgBalanceOf(address account) public view returns (uint256 dsgAmount) {
+    function mbtBalanceOf(address account) public view returns (uint256 mbtAmount) {
         UserInfo memory user = userInfo[account];
         (uint256 newAlpha,) = getLatestAlpha();
-        uint256 nominalDsg =  DecimalMath.mulFloor(uint256(user.stakingPower), newAlpha);
-        if(nominalDsg > user.credit) {
-            dsgAmount = nominalDsg - user.credit;
+        uint256 nominalMbt =  DecimalMath.mulFloor(uint256(user.stakingPower), newAlpha);
+        if(nominalMbt > user.credit) {
+            mbtAmount = nominalMbt - user.credit;
         } else {
-            dsgAmount = 0;
+            mbtAmount = 0;
         }
     }
 
-    function getWithdrawResult(uint256 dsgAmount)
+    function getWithdrawResult(uint256 mbtAmount)
     public
     view
     returns (
-        uint256 dsgReceive,
-        uint256 burnDsgAmount,
-        uint256 withdrawFeeDsgAmount,
-        uint256 reserveDsgAmount
+        uint256 mbtReceive,
+        uint256 burnMbtAmount,
+        uint256 withdrawFeeMbtAmount,
+        uint256 reserveMbtAmount
     )
     {
-        uint256 feeRatio = getDsgWithdrawFeeRatio();
+        uint256 feeRatio = getMbtWithdrawFeeRatio();
 
-        withdrawFeeDsgAmount = DecimalMath.mulFloor(dsgAmount, feeRatio);
-        dsgReceive = dsgAmount.sub(withdrawFeeDsgAmount);
+        withdrawFeeMbtAmount = DecimalMath.mulFloor(mbtAmount, feeRatio);
+        mbtReceive = mbtAmount.sub(withdrawFeeMbtAmount);
 
-        burnDsgAmount = DecimalMath.mulFloor(withdrawFeeDsgAmount, _dsgFeeBurnRatio);
-        reserveDsgAmount = DecimalMath.mulFloor(withdrawFeeDsgAmount, _dsgFeeReserveRatio);
+        burnMbtAmount = DecimalMath.mulFloor(withdrawFeeMbtAmount, _mbtFeeBurnRatio);
+        reserveMbtAmount = DecimalMath.mulFloor(withdrawFeeMbtAmount, _mbtFeeReserveRatio);
 
-        withdrawFeeDsgAmount = withdrawFeeDsgAmount.sub(burnDsgAmount);
-        withdrawFeeDsgAmount = withdrawFeeDsgAmount.sub(reserveDsgAmount);
+        withdrawFeeMbtAmount = withdrawFeeMbtAmount.sub(burnMbtAmount);
+        withdrawFeeMbtAmount = withdrawFeeMbtAmount.sub(reserveMbtAmount);
     }
 
-    function getDsgWithdrawFeeRatio() public view returns (uint256 feeRatio) {
-        uint256 dsgCirculationAmount = getCirculationSupply();
+    function getMbtWithdrawFeeRatio() public view returns (uint256 feeRatio) {
+        uint256 mbtCirculationAmount = getCirculationSupply();
 
         uint256 x =
         DecimalMath.divCeil(
             totalSupply() * 100,
-            dsgCirculationAmount
+            mbtCirculationAmount
         );
 
         feeRatio = getRatioValue(x);
@@ -387,7 +379,7 @@ contract vDSGToken is Ownable {
         _lastRewardBlock = uint32(block.number);
         
         if( curDistribution > 0) {
-            IDsgToken(_dsgToken).mint(address(this), curDistribution);
+            IMagicBallToken(_mbtToken).mint(address(this), curDistribution);
         
             _totalBlockReward = _totalBlockReward.add(curDistribution);
             emit PreDeposit(curDistribution);
@@ -458,13 +450,13 @@ contract vDSGToken is Ownable {
     function _transfer(
         address from,
         address to,
-        uint256 vDsgAmount
-    ) internal canTransfer balanceEnough(from, vDsgAmount) {
+        uint256 vMbtAmount
+    ) internal canTransfer balanceEnough(from, vMbtAmount) {
         require(from != address(0), "transfer from the zero address");
         require(to != address(0), "transfer to the zero address");
         require(from != to, "transfer from same with to");
 
-        uint256 stakingPower = DecimalMath.divFloor(vDsgAmount * _dsgRatio, alpha);
+        uint256 stakingPower = DecimalMath.divFloor(vMbtAmount * _mbtRatio, alpha);
 
         UserInfo storage fromUser = userInfo[from];
         UserInfo storage toUser = userInfo[to];
@@ -472,10 +464,10 @@ contract vDSGToken is Ownable {
         _redeem(fromUser, stakingPower);
         _mint(toUser, stakingPower);
 
-        emit Transfer(from, to, vDsgAmount);
+        emit Transfer(from, to, vMbtAmount);
     }
 
      function getCirculationSupply() public view returns (uint256 supply) {
-        supply = IERC20(_dsgToken).totalSupply();
+        supply = IERC20(_mbtToken).totalSupply();
     }
 }

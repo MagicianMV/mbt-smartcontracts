@@ -3,7 +3,7 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "../token/DSGToken.sol";
+import "../token/MagicBallToken.sol";
 
 contract GovernorV1 {
     struct Proposal {
@@ -64,7 +64,7 @@ contract GovernorV1 {
     TimelockInterface public timelock;
 
     /// @notice The address of the dsg governance token
-    DSGToken public token;
+    MagicBallToken public token;
 
     /// @notice The address of the Governor Guardian
     address public guardian;
@@ -91,7 +91,7 @@ contract GovernorV1 {
         address _guardian
     ) public {
         timelock = TimelockInterface(_timelock);
-        token = DSGToken(_token);
+        token = MagicBallToken(_token);
         guardian = _guardian;
     }
 

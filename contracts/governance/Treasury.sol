@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../libraries/SwapLibrary.sol";
 import "../interfaces/ISwapRouter02.sol";
-import "../interfaces/IDsgToken.sol";
+import "../interfaces/IMagicBallToken.sol";
 import "../governance/InitializableOwner.sol";
 import "../interfaces/IWOKT.sol";
 
@@ -340,7 +340,7 @@ contract Treasury is InitializableOwner {
         require(IERC20(USDT).balanceOf(address(this)) >= _amountIn, "Treasury: amount is less than USDT balance");
 
         amountOut = swapUSDToDSG(_amountIn);
-        IDsgToken(DSG).burn(amountOut);
+        IMagicBallToken(DSG).burn(amountOut);
 
         totalRepurchasedUSDT = totalRepurchasedUSDT.add(_amountIn);
         totalBurnedDSG = totalBurnedDSG.add(amountOut);

@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../token/DSGToken.sol";
+import "../interfaces/IMagicBallToken.sol";
 import "../interfaces/ISwapPair.sol";
 import "../interfaces/ISwapFactory.sol";
 import "../libraries/SwapLibrary.sol";
@@ -78,7 +78,7 @@ contract TradingPool is Ownable {
     }
 
     // The reward token!
-    DSGToken public rewardToken;
+    IMagicBallToken public rewardToken;
     // reward tokens created per block.
     uint256 public rewardTokenPerBlock;
     // Info of each pool.
@@ -104,7 +104,7 @@ contract TradingPool is Ownable {
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
 
     constructor(
-        DSGToken _rewardToken,
+        IMagicBallToken _rewardToken,
         ISwapFactory _factory,
         IOracle _oracle,
         address _router,

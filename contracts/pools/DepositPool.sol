@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../token/DSGToken.sol";
+import "../interfaces/IMagicBallToken.sol";
 
 contract DepositPool is Ownable {
     using SafeMath for uint256;
@@ -57,7 +57,7 @@ contract DepositPool is Ownable {
     }
 
     // The reward Token
-    DSGToken public rewardToken;
+    IMagicBallToken public rewardToken;
     // token created per block.
     uint256 public rewardTokenPerBlock;
     // Info of each pool.
@@ -77,7 +77,7 @@ contract DepositPool is Ownable {
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
 
     constructor(
-        DSGToken _rewardToken,
+        IMagicBallToken _rewardToken,
         uint256 _rewardPerBlock,
         uint256 _startBlock
     ) public {

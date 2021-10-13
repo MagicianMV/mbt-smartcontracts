@@ -4,11 +4,11 @@ pragma solidity =0.6.12;
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "../interfaces/IDsgToken.sol";
+import "../interfaces/IMagicBallToken.sol";
 import "../libraries/SwapLibrary.sol";
 import "../interfaces/ISwapRouter02.sol";
 
-interface IvDsg {
+interface IvMbt {
     function donate(uint256 dsgAmount) external;
 }
 
@@ -31,12 +31,12 @@ contract vDsgTreasury is Ownable {
     }
 
     function sendToVDSG() external onlyCaller {
-        uint256 _amount = IDsgToken(dsg).balanceOf(address(this));
+        uint256 _amount = IMagicBallToken(dsg).balanceOf(address(this));
 
         require(_amount > 0, "vDsgTreasury: amount exceeds balance");
 
-        IDsgToken(dsg).approve(vdsg, _amount);
-        IvDsg(vdsg).donate(_amount);
+        IMagicBallToken(dsg).approve(vdsg, _amount);
+        IvMbt(vdsg).donate(_amount);
     }
 
     function _swap(
