@@ -65,6 +65,7 @@ contract SinglePoolFactory is Ownable {
     }
 
     function addPool(address pool) public onlyOwner {
+        require(pool != address(0), "zero address");
         pools.add(pool);
     }
 

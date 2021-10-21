@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-
-contract SinglePool is Ownable {
+contract SinglePool is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -26,7 +26,6 @@ contract SinglePool is Ownable {
         uint256 accRewardsPerShare; // Accumulated RewardTokens per share, times 1e18. See below.
     }
 
-    IERC20 public depositToken;
     IERC20 public rewardToken;
 
     // uint256 public maxStaking;
@@ -61,7 +60,6 @@ contract SinglePool is Ownable {
         uint256 _startBlock,
         uint256 _bonusEndBlock
     ) public {
-        depositToken = _depositToken;
         rewardToken = _rewardToken;
         rewardPerBlock = _rewardPerBlock;
         startBlock = _startBlock;
@@ -84,9 +82,22 @@ contract SinglePool is Ownable {
         bonusEndBlock = block.number;
     }
 
+    function depositToken() public view returns(address) {
+        return address(poolInfo[0].lpToken);
+    }
 
     // Return reward multiplier over the given _from to _to block.
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
+        if(_to < startBlock) {
+            return 0;
+        }
+        if (_from < startBlock) {
+            _from = startBlock;
+        }
+        if (_to > bonusEndBlock) {
+            _to = bonusEndBlock;
+        }
+
         if (_to <= bonusEndBlock) {
             return _to.sub(_from).mul(BONUS_MULTIPLIER);
         } else if (_from >= bonusEndBlock) {
@@ -173,7 +184,7 @@ contract SinglePool is Ownable {
     }
 
     // Withdraw tokens from STAKING.
-    function withdraw(uint256 _amount) public {
+    function withdraw(uint256 _amount) public nonReentrant {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -198,7 +209,7 @@ contract SinglePool is Ownable {
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw() public {
+    function emergencyWithdraw() public nonReentrant {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         pool.lpToken.safeTransfer(address(msg.sender), user.amount);
