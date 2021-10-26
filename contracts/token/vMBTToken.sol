@@ -97,8 +97,6 @@ contract vMBTToken is Ownable {
         _mbtToken = mbtToken;
         _mbtTeam = mbtTeam;
         _mbtReserve = mbtReserve;
-
-        changePerReward(15*10**18);
     }
 
     // ============ Ownable Functions ============`

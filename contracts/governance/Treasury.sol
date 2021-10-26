@@ -25,12 +25,11 @@ contract Treasury is InitializableOwner {
 
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private _callers;
-    EnumerableSet.AddressSet private _stableCoins; // all stable coins must has a pair with USDT
+    EnumerableSet.AddressSet private _stableCoins; // all stable coins must has a pair with USDC
 
     address public factory;
     address public router;
-    address public USDT;
-    address public VAI;
+    address public USDC;
     address public WETH;
     address public DSG;
     address public team;
@@ -55,7 +54,7 @@ contract Treasury is InitializableOwner {
     uint256 public vDsgBonusAmount;
     uint256 public totalDistributedFee;
     uint256 public totalBurnedDSG;
-    uint256 public totalRepurchasedUSDT;
+    uint256 public totalRepurchasedUSDC;
 
     struct PairInfo {
         uint256 count; // how many times the liquidity burned
@@ -88,8 +87,7 @@ contract Treasury is InitializableOwner {
     function initialize (
         address _factory,
         address _router,
-        address _usdt,
-        address _vai,
+        address _usdc,
         address _weth,
         address _dsg,
         address _vdsgTreasury,
@@ -101,8 +99,7 @@ contract Treasury is InitializableOwner {
 
         factory = _factory;
         router = _router;
-        USDT = _usdt;
-        VAI = _vai;
+        USDC = _usdc;
         WETH = _weth;
         DSG = _dsg;
         vDsgTreasury = _vdsgTreasury;
@@ -239,13 +236,13 @@ contract Treasury is InitializableOwner {
         uint256 amountOut;
         if (isStableCoin(token0)) {
             amountOut = _swap(token1, token0, amount1, address(this));
-            if (token0 != USDT) {
-                amountOut = _swap(token0, USDT, amountOut.add(amount0), address(this));
+            if (token0 != USDC) {
+                amountOut = _swap(token0, USDC, amountOut.add(amount0), address(this));
             }
         } else {
             amountOut = _swap(token0, token1, amount0, address(this));
-            if (token1 != USDT) {
-                amountOut = _swap(token1, USDT, amountOut.add(amount1), address(this));
+            if (token1 != USDC) {
+                amountOut = _swap(token1, USDC, amountOut.add(amount1), address(this));
             }
         }
 
@@ -254,7 +251,7 @@ contract Treasury is InitializableOwner {
 
     function getRemaining() public view onlyCaller returns(uint256 remaining) {
         uint256 pending = lpBonusAmount.add(nftBonusAmount).add(dsgLpBonusAmount).add(vDsgBonusAmount);
-        uint256 bal = IERC20(USDT).balanceOf(address(this));
+        uint256 bal = IERC20(USDC).balanceOf(address(this));
         if (bal <= pending) {
             return 0;
         }
@@ -288,7 +285,7 @@ contract Treasury is InitializableOwner {
         uint256 _repurchasedAmount = curAmount;
         uint256 _burnedAmount = repurchase(_repurchasedAmount);
 
-        IERC20(USDT).safeTransfer(team, _teamAmount);
+        IERC20(USDC).safeTransfer(team, _teamAmount);
 
         lpBonusAmount = lpBonusAmount.add(_lpBonusAmount);
         nftBonusAmount = nftBonusAmount.add(_nftBonusAmount);
@@ -337,12 +334,12 @@ contract Treasury is InitializableOwner {
     }
 
     function repurchase(uint256 _amountIn) internal returns (uint256 amountOut) {
-        require(IERC20(USDT).balanceOf(address(this)) >= _amountIn, "Treasury: amount is less than USDT balance");
+        require(IERC20(USDC).balanceOf(address(this)) >= _amountIn, "Treasury: amount is less than USDC balance");
 
         amountOut = swapUSDToDSG(_amountIn);
         IMagicBallToken(DSG).burn(amountOut);
 
-        totalRepurchasedUSDT = totalRepurchasedUSDT.add(_amountIn);
+        totalRepurchasedUSDC = totalRepurchasedUSDC.add(_amountIn);
         totalBurnedDSG = totalBurnedDSG.add(amountOut);
     }
 
@@ -374,17 +371,15 @@ contract Treasury is InitializableOwner {
 
     function swapUSDToDSG(uint256 _amountUSD) internal returns(uint256 amountOut) {
         uint256 balOld = IERC20(DSG).balanceOf(address(this));
-        
-        _swap(USDT, VAI, _amountUSD, address(this));
-        uint256 amountVAI = IERC20(VAI).balanceOf(address(this));
-        _swap(VAI, DSG, amountVAI, address(this));
+
+        _swap(USDC, DSG, _amountUSD, address(this));
 
         amountOut = IERC20(DSG).balanceOf(address(this)).sub(balOld);
     }
 
     function swapUSDToWETH(uint256 _amountUSD) internal returns(uint256 amountOut) {
         uint256 balOld = IERC20(WETH).balanceOf(address(this));
-        _swap(USDT, WETH, _amountUSD, address(this));
+        _swap(USDC, WETH, _amountUSD, address(this));
         amountOut = IERC20(WETH).balanceOf(address(this)).sub(balOld);
     }
 

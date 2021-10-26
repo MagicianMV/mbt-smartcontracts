@@ -78,7 +78,7 @@ contract Aggregator is InitializableOwner{
                 nftBonusAmount: treasury.nftBonusAmount(),
                 totalDistributedFee: treasury.totalDistributedFee(),
                 totalBurnedDSG: treasury.totalBurnedDSG(),
-                totalRepurchasedUSDT: treasury.totalRepurchasedUSDT()
+                totalRepurchasedUSDT: treasury.totalRepurchasedUSDC()
             });
     }
 

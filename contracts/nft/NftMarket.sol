@@ -110,8 +110,6 @@ contract NFTMarket is Context, IERC721Receiver, ReentrancyGuard, InitializableOw
         _minDurationTime = 5 minutes;
         _tipsFeeWallet = tipsFeeWallet;
         WETH = weth;
-
-        addSupportCurrency(TransferHelper.getETH());
     }
 
     /**
