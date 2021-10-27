@@ -13,7 +13,7 @@ contract MagicBallToken is DelegateERC20, Ownable {
     event AddWhiteList(address user);
     event RemoveWhiteList(address user);
 
-    uint256 public teamRate = 990;
+    uint256 public teamRate = 500;
     address public teamWallet;
     address public feeWallet;
 

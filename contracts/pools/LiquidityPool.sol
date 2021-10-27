@@ -93,7 +93,7 @@ contract LiquidityPool is Ownable {
     uint256 public halvingPeriod = 3952800; // half year
 
     uint256[] public additionalRate = [0, 300, 400, 500, 600, 800, 1000]; //The share ratio that can be increased by each level of nft
-    uint256 public nftSlotFee = 1e18; //Additional nft requires a card slot, enable the card slot requires fee
+    uint256 public nftSlotFee = 10e18; //Additional nft requires a card slot, enable the card slot requires fee
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);

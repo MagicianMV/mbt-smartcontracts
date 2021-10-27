@@ -67,7 +67,7 @@ contract DsgNft is IDsgNft, ERC721, InitializableOwner, ReentrancyGuard, Pausabl
     address public _feeWallet;
 
     uint256[] private _levelBasePower = [1000, 2500, 6500, 14500, 35000, 90000];
-    uint256[] private _levelUpFee = [0, 500e18, 1200e18, 2400e18, 4800e18, 9600e18];
+    uint256[] private _levelUpFee = [0, 150e18, 400e18, 800e18, 1600e18, 3200e18];
 
     mapping(uint256 => LibPart.Part[])  private _royalties; //tokenId : LibPart.Part[]
 
@@ -90,7 +90,7 @@ contract DsgNft is IDsgNft, ERC721, InitializableOwner, ReentrancyGuard, Pausabl
     ) public {
         _tokenId = 1000;
         _levelBasePower = [1000, 2500, 6500, 14500, 35000, 90000];
-        _levelUpFee = [0, 500e18, 1200e18, 2400e18, 4800e18, 9600e18];
+        _levelUpFee = [0, 150e18, 400e18, 800e18, 1600e18, 3200e18];
         
         super._initialize();
         
@@ -135,6 +135,11 @@ contract DsgNft is IDsgNft, ERC721, InitializableOwner, ReentrancyGuard, Pausabl
 
     function setCanUpgrade(bool newVal) public onlyOwner {
         canUpgrade = newVal;
+    }
+
+    function setUpgradeFee(uint256[] memory fee) public onlyOwner {
+        require(fee.length == _levelUpFee.length, "bad data");
+        _levelUpFee = fee;
     }
 
     function getNft(uint256 id) public view override returns (LibPart.NftInfo memory) {
