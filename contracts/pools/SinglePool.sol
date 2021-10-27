@@ -91,7 +91,7 @@ contract SinglePool is Ownable, ReentrancyGuard {
         if(_to < startBlock) {
             return 0;
         }
-        
+
         if (_from > bonusEndBlock) {
             return 0;
         }
@@ -106,8 +106,6 @@ contract SinglePool is Ownable, ReentrancyGuard {
 
         if (_to <= bonusEndBlock) {
             return _to.sub(_from).mul(BONUS_MULTIPLIER);
-        } else if (_from >= bonusEndBlock) {
-            return 0;
         } else {
             return bonusEndBlock.sub(_from).mul(BONUS_MULTIPLIER);
         }
