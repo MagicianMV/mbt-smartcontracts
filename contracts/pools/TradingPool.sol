@@ -97,7 +97,7 @@ contract TradingPool is Ownable {
     ISwapFactory public factory;
     // The block number when reward token mining starts.
     uint256 public startBlock;
-    uint256 public halvingPeriod = 3952800; // half year
+    uint256 public halvingPeriod = 6613000; // half year
 
     event Swap(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
