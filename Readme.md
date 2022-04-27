@@ -1,4 +1,4 @@
-# Dinosaur Eggs Metaverse
+# Magician Metaverse
 
 # Local Development
 
